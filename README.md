@@ -5,6 +5,7 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 ## Powered by:
 ### API Powered by
 the News items or articles were fetched and displayed with [World News API](https://worldnewsapi.com)
+
 World News API is free for devolopers and allows upto 50 API hits/calls per day. 
 
 ### CSS framework 
