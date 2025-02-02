@@ -19,9 +19,10 @@ export default class App extends Component {
   }
   key=process.env.REACT_APP_API_KEY
   render() {
-    let a=new Date()
-    a.setDate(a.getDate() - 5)
-    let formatted_date= a.getFullYear() + "-" +(a.getMonth()+1) + "-" + (('0'+a.getDate()).slice(-2))
+    let a = new Date();
+    a.setDate(a.getDate() - 5);
+    let formatted_date = a.getFullYear() + "-" + (('0' + a.getMonth() + 1).slice(-2)) + "-" + (('0' + a.getDate()).slice(-2));
+    console.log(formatted_date)
     return (
       <>
       <Router>
