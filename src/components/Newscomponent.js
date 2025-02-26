@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import './News.css'
 import NewsItem from './Item'
-import _, { set } from 'lodash'
+import _ from 'lodash'
 import Loading from './Loading';
 
 export class Newscomponent extends Component {
