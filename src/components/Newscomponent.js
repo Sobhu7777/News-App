@@ -1,94 +1,134 @@
-import React, { Component } from 'react'
-import './News.css'
-import NewsItem from './Item'
-import _ from 'lodash'
+import React, { useState, useEffect } from 'react';
+import './News.css';
+import NewsItem from './Item';
+import _ from 'lodash';
 import Loading from './Loading';
 
-export class Newscomponent extends Component {
-    constructor(props){
-        super(props);
-        this.state={
-            articles:[],
-            loading:false
-        }
-        document.title=`NewsWorm-${this.props.title}`
+function Newscomponent(props) {
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 576);
+
+  useEffect(() => {
+  const controller = new AbortController();
+
+  const fetchData = async () => {
+    try {
+      props.setProgress(0);
+      const url = `https://api.worldnewsapi.com/search-news?api-key=${props.api_key}&source-country=${props.country}&language=en&categories=${props.category}&earliest-publish-date=${props.date}&number=90`;
+      setLoading(true);
+      const response = await fetch(url, { signal: controller.signal });
+      props.setProgress(25);
+      const parsedData = await response.json();
+      props.setProgress(70);
+      const shuffled = _.shuffle(parsedData.news);
+      setArticles(shuffled);
+      setLoading(false);
+      props.setProgress(100);
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error("Fetch failed:", error);
+      }
     }
-    async componentDidMount(){
-        this.props.setProgress(0)
-      // let url1=`https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=${this.props.api_key}`
-      let url=`https://api.worldnewsapi.com/search-news?api-key=${this.props.api_key}&source-country=${this.props.country}&language=en&categories=${this.props.category}&earliest-publish-date=${this.props.date}&number=90`
-      this.setState({loading:true})
-      let data=await fetch(url)
-      this.props.setProgress(25)
-      let parsedData= await data.json()
-      console.log(parsedData)
-      this.props.setProgress(70)
-      // shuffling and setting
-      const shfArticle=_.shuffle(parsedData.news)
-      console.log(shfArticle)
-      this.setState({articles:shfArticle,
-        loading:false
-      })
-      // console.log(this.state.articles)
-      this.props.setProgress(100)
-    }
-  render() {
-    const filteredArticles = this.state.articles.filter(
-      element => element.author != null && element.image != null
-    );
-    return (
-        <div className="container mt-5">
-        <h1 className="carousel-title">{this.props.title}</h1>
-        {this.state.loading && <Loading />}
-        {!this.state.loading && (
-          <div id="newsCarousel" className="carousel slide" data-bs-ride="carousel" data-bs-wrap="true">
-            <div className="carousel-inner">
-              {Array.from({ length: Math.floor(filteredArticles.length / 3) }).map((_, index) => (
-                <div className={`carousel-item ${index === 0 ? 'active' : ''}`} key={index}>
-                  <div className="row">
-                    {filteredArticles
-                      .slice(index * 3, index * 3 + 3)
-                      .map(element => (
-                        <div className="col-md-4" key={element.url}>
-                          <NewsItem
-                            title={element.title.slice(0, 50)}
-                            description={element.text.slice(0, 100)}
-                            imageUrl={element.image}
-                            author={element.author}
-                            date={element.publish_date}
-                            newsUrl={element.url}
-                          />
-                        </div>
-                      ))}
+  };
+
+  fetchData();
+
+  // cleanup function to cancel request if component unmounts
+  return () => {
+    controller.abort();
+  };
+}, [props.api_key, props.country, props.category, props.date]);
+
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 576);
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const filteredArticles = articles.filter(
+    element => element.author != null && element.image != null
+  );
+
+  return (
+    <div className="container mt-5">
+      <h1 className="carousel-title">{props.title}</h1>
+      {loading && <Loading />}
+
+      {!loading && (
+        <>
+          {!isMobile ? (
+            <div id="newsCarousel" className="carousel slide" data-bs-ride="carousel" data-bs-touch="true" data-bs-wrap="true">
+              <div className="carousel-inner">
+                {Array.from({ length: Math.floor(filteredArticles.length / 3) }).map((_, index) => (
+                  <div className={`carousel-item ${index === 0 ? 'active' : ''}`} key={index}>
+                    <div className="row">
+                      {filteredArticles
+                        .slice(index * 3, index * 3 + 3)
+                        .map(element => (
+                          <div className="col-md-4" key={element.url}>
+                            <NewsItem
+                              title={element.title.slice(0, 50)}
+                              description={element.text.slice(0, 100)}
+                              imageUrl={element.image}
+                              author={element.author}
+                              date={element.publish_date}
+                              newsUrl={element.url}
+                            />
+                          </div>
+                        ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+
+              <a className="carousel-control-prev" href="#newsCarousel" role="button" data-bs-slide="prev">
+                <span className="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span className="visually-hidden">Previous</span>
+              </a>
+              <a className="carousel-control-next" href="#newsCarousel" role="button" data-bs-slide="next">
+                <span className="carousel-control-next-icon" aria-hidden="true"></span>
+                <span className="visually-hidden">Next</span>
+              </a>
+
+              <ol className="carousel-indicators">
+                {Array.from({ length: Math.floor(articles.length / 3) }).map((_, index) => (
+                  <li
+                    key={index}
+                    data-bs-target="#newsCarousel"
+                    data-bs-slide-to={index}
+                    className={index === 0 ? 'active' : ''}
+                  ></li>
+                ))}
+              </ol>
             </div>
-
-            <a className="carousel-control-prev" href="#newsCarousel" role="button" data-bs-slide="prev">
-              <span className="carousel-control-prev-icon" aria-hidden="true"></span>
-              <span className="sr-only">Previous</span>
-            </a>
-            <a className="carousel-control-next" href="#newsCarousel" role="button" data-bs-slide="next">
-              <span className="carousel-control-next-icon" aria-hidden="true"></span>
-              <span className="sr-only">Next</span>
-            </a>
-
-            <ol className="carousel-indicators">
-              {Array.from({ length: Math.floor(this.state.articles.length / 3) }).map((_, index) => (
-                <li
-                  key={index}
-                  data-bs-target="#newsCarousel"
-                  data-bs-slide-to={index}
-                  className={index === 0 ? 'active' : ''}
-                ></li>
-              ))}
-            </ol>
-          </div>
-        )}
-      </div>
-    );
-  }
+          ) : (
+            <div className="news-scroll-container">
+              <div className="news-scroll-row">
+                {filteredArticles.map(element => (
+                  <div className="news-scroll-card" key={element.url}>
+                    <NewsItem
+                      title={element.title.slice(0, 50)}
+                      description={element.text.slice(0, 100)}
+                      imageUrl={element.image}
+                      author={element.author}
+                      date={element.publish_date}
+                      newsUrl={element.url}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
 }
 
-export default Newscomponent
+export default Newscomponent;

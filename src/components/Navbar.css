@@ -61,3 +61,15 @@ body {
 .navbar-toggler-icon {
     background-color: rgba(0, 0, 0, 0.1); /* Light color for the icon */
 }
+
+@media (max-width: 576px) {
+  .navbar{
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+  
+  .navbar-brand {
+    font-size: 1.55rem;
+}
+}
